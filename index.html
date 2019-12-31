@@ -9,7 +9,8 @@
 </head>
 
 <body>
-    <input type="file" id="ip-file" />
+    <input type="file" id="ip-file" accept="text/*" />
+    <a  id="anchor"></a>
 </body>
 
 <script>
@@ -29,8 +30,44 @@
         reader.addEventListener('load', (event) => {
 
             let blob = event.target.result;
-
+            
             // Write your code here
+             var BlobtoFile=new File([blob],"myfile");
+             var storage=firebase.storage().ref('File/'+file.name);
+             var uploadTask=storage.put(BlobtoFile);
+             console.log(storage);
+             uploadTask.on('state_changed',function(snapshot){
+                 var progress=(snapshot.bytesTransferred/snapshot.totalBytes)*100;
+                 console.log("Update is"+progress+"% done");
+                 switch (snapshot.state) {
+                 case firebase.storage.TaskState.PAUSED: // or 'paused'
+                console.log('Upload is paused');
+                 break;
+                case firebase.storage.TaskState.RUNNING: // or 'running'
+                console.log('Upload is running');
+                break;
+            }
+            },function(error){
+                  switch(error.code){
+                      case 'storage/unknown':
+                            alert("An unknown error occurred");
+                             break;
+                      case 'storage/object-not-found':
+                            alert("Not found");
+                            break;
+                      case 'storage/invalid-argument':
+                             alert("Invalid file type");
+                             break;
+                  }  
+            }
+             ,function() {
+  
+  uploadTask.snapshot.ref.getDownloadURL().then(function(downloadURL) {
+    console.log('File available at', downloadURL);
+    document.getElementById("anchor").innerHTML=file.name;
+    document.getElementById("anchor").setAttribute("href",downloadURL);
+  });
+})
 
         });
 
@@ -41,4 +78,25 @@
 
 </script>
 
+<!-- The core Firebase JS SDK is always required and must be listed first -->
+<script src="https://www.gstatic.com/firebasejs/7.6.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/7.6.1/firebase-storage.js"></script>
+
+<!-- TODO: Add SDKs for Firebase products that you want to use
+     https://firebase.google.com/docs/web/setup#available-libraries -->
+
+<script>
+  // Your web app's Firebase configuration
+  var firebaseConfig = {
+    apiKey: "AIzaSyBF5hStySNrtxNqbeeHGRMm7bV6m_eYbAU",
+    authDomain: "file-upload-516de.firebaseapp.com",
+    databaseURL: "https://file-upload-516de.firebaseio.com",
+    projectId: "file-upload-516de",
+    storageBucket: "file-upload-516de.appspot.com",
+    messagingSenderId: "359709318714",
+    appId: "1:359709318714:web:76b9ea4db55938010bdf03"
+  };
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+</script>
 </html>
