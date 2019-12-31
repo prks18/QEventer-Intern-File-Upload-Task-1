@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+    .div{
+        width:300px;
+        min-height:100px;
+        border:1px solid grey;
+        margin:20px; /*To distance itself from upload*/
+        /*For the default text*/
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color:#cccccc;
+    }
+    img{
+        display:none;
+        width:100%; /*Ensures  that image doesn't overflow */
+    }
+    #progress{
+        display:none;
+    }
+    </style>
+</head>
+<body>
+    <h1>Image Preview</h1>
+    <form>
+    <input type="file" id="file" accept="images\* " multiple/>
+    <input tpe="text" id="userid" placeholder="Enter user id"  />
+     <input type="submit" value="Submit" id="submit">
+     <!-- <div class="container">
+         <div class="progresscontainer">
+             <div class="progress" id="progress"></div>
+         </div>
+     </div> -->
+     <progress value=0 max=100 id="progress"></progress>
+    </form>
+     <div class="div">
+    <img src="" alt="Image Preview" id="image"/>
+    <span id="defaultText">Image Preview</span>
+</div><br/>
+<script>
+var submit=document.getElementById("submit");
+var file=document.getElementById("file")
+var width=2;
+var firstFile;
+var progress;
+file.addEventListener("change",()=>{
+firstFile=file.files[0];
+if(firstFile){
+    
+var image=document.getElementById("image")
+image.style.display="block";
+document.getElementById("defaultText").style.display="none";
+image.setAttribute("src",window.URL.createObjectURL(firstFile)); //gets the file url of the object given as arguement
+
+URL.revokeObjectURL(firstFile);
+
+}
+else{
+    document.getElementById("image").style.display="none";
+    document.getElementById("defaultText").style.display="inline";
+}
+
+})
+submit.addEventListener("click",(e)=>{
+    e.preventDefault();
+
+    var userid=document.getElementById("userid");
+    
+if(userid.value!='' && typeof(userid.value)!=undefined){
+   
+var ref=firebase.storage().ref("Images/"+userid.value); //push to storage
+var uploadTask=ref.put(firstFile);
+uploadTask.on('state_changed',function(snapshot){  //when the state of uploadtask changes
+                 //code for progress
+                  progress=(snapshot.bytesTransferred/snapshot.totalBytes)*100;  //bytesTransferred is a property that gives us what it says
+                 var id=setInterval(progressbar,6)
+                 document.getElementById("progress").style.display="inline";
+                 function progressbar(){
+                   try{
+                     if(width<=100){
+                    document.getElementById("progress").setAttribute("value",width);
+                  width++;
+                     }
+                     else{
+                        document.getElementById("progress").style.display="none";
+                         clearInterval(id);
+                     }
+                }
+                catch(Exception){
+
+                }
+            }
+                 switch (snapshot.state) {
+                 case firebase.storage.TaskState.PAUSED: // or 'paused'
+                console.log('Upload is paused');
+                 break;
+                case firebase.storage.TaskState.RUNNING: // or 'running'
+                console.log('Upload is running');
+                break;
+            }
+            
+            },function(error){
+                  switch(error.code){
+                      case 'storage/unknown':
+                            alert("An unknown error occurred");
+                             break;
+                      case 'storage/object-not-found':
+                            alert("Not found");
+                            break;
+                      case 'storage/invalid-argument':
+                             alert("Invalid file type");
+                             break;
+                  }  
+            },function(){ 
+                if(progress==100)
+                { 
+                    document.open();
+                
+                document.write("<div id=\"newdiv\"><p>Retrieve your file here</p><input type=\"text\" placeholder=\"Enter your user id\" id=\"fetchid\"/><br/><input type=\"submit\" value=\"Submit\" onclick=\"fetch()\"/></div>");
+                    
+                }
+                            })
+}
+else{
+       alert("Enter user id");
+}
+})
+
+function fetch()
+{    var fetchid=document.getElementById("fetchid")
+    firebase.storage().ref('/Images/'+fetchid.value).getDownloadURL().then(function(downloadURL){
+    document.write(`<p>Your download url is <a href="${downloadURL}">${downloadURL}</a></p>`)
+    })
+}
+</script>
+<!-- The core Firebase JS SDK is always required and must be listed first -->
+<script src="https://www.gstatic.com/firebasejs/7.6.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/7.6.1/firebase-storage.js"></script>
+
+<!-- TODO: Add SDKs for Firebase products that you want to use
+     https://firebase.google.com/docs/web/setup#available-libraries -->
+
+<script>
+  // Your web app's Firebase configuration
+  var firebaseConfig = {
+    apiKey: "AIzaSyBF5hStySNrtxNqbeeHGRMm7bV6m_eYbAU",
+    authDomain: "file-upload-516de.firebaseapp.com",
+    databaseURL: "https://file-upload-516de.firebaseio.com",
+    projectId: "file-upload-516de",
+    storageBucket: "file-upload-516de.appspot.com",
+    messagingSenderId: "359709318714",
+    appId: "1:359709318714:web:76b9ea4db55938010bdf03"
+  };
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+</script>
+</body>
+</html>
